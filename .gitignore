@@ -1,11 +1,6 @@
-XMPPSvnDaemon.jar
-.first
-config.properties
-developers.properties
-services.properties
-/bin
-/plugins_bin
-infiniteStory
 .classpath
 .gradle/
+.idea/
+.project
+.settings/
 build/
