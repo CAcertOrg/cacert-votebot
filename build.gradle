@@ -1,0 +1,18 @@
+description = "IRC vote bot for CAcert.org"
+
+apply plugin: 'java'
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+repositories {
+    mavenCentral()
+}
+
+group = 'org.cacert'
+version = '0.1.0-SNAPSHOT'
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.13'
+}
+

@@ -6,3 +6,6 @@ services.properties
 /bin
 /plugins_bin
 infiniteStory
+.classpath
+.gradle/
+build/
