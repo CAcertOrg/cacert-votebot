@@ -40,6 +40,5 @@ bootRun {
 }
 
 bootRepackage {
-    enabled = false
     executable = true
 }
