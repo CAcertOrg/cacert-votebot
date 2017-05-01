@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015  Felix Doerre
+ * Copyright (c) 2015  Benny Baumann
  * Copyright (c) 2016  Jan Dittberner
  *
  * This file is part of CAcert votebot.
