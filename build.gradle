@@ -21,24 +21,24 @@ description = "IRC vote bot for CAcert.org"
 
 buildscript {
     repositories {
-        mavenCentral()
+        jcenter()
     }
 
     dependencies {
-        classpath "org.springframework.boot:spring-boot-gradle-plugin:1.3.5.RELEASE"
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:1.4.2.RELEASE"
     }
 }
 
 apply plugin: 'java'
 apply plugin: 'application'
-apply plugin: 'spring-boot'
+apply plugin: 'org.springframework.boot'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 mainClassName = 'org.cacert.votebot.vote.CAcertVoteBot'
 
 repositories {
-    mavenCentral()
+    jcenter()
 }
 
 dependencies {
