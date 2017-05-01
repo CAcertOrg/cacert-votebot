@@ -64,6 +64,7 @@ import java.util.concurrent.Semaphore;
  * @author Felix Doerre
  * @author Jan Dittberner
  */
+@SuppressWarnings({"unused", "WeakerAccess"})
 @Component
 public final class IRCClient {
     /**
@@ -213,9 +214,8 @@ public final class IRCClient {
         }
     }
 
-    @SuppressWarnings("unused")
     @PreDestroy
-    private void leaveAll() {
+    public void leaveAll() {
         List<String> channels = new ArrayList<>(joinedChannels);
         for (String channel : channels) {
             try {
