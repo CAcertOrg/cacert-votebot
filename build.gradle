@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018  Jan Dittberner
+ * Copyright (c) 2016  Jan Dittberner
  *
  * This file is part of CAcert votebot.
  *
@@ -25,17 +25,16 @@ buildscript {
     }
 
     dependencies {
-        classpath "org.springframework.boot:spring-boot-gradle-plugin:1.5.10.RELEASE"
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:2.0.0.RELEASE"
     }
 }
 
 apply plugin: 'java'
-apply plugin: 'application'
 apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
-mainClassName = 'org.cacert.votebot.vote.CAcertVoteBot'
 
 repositories {
     jcenter()
@@ -50,14 +49,16 @@ dependencies {
 group = 'org.cacert'
 version = '0.1.0-SNAPSHOT'
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.6'
+bootJar {
+    mainClassName = 'org.cacert.votebot.vote.CAcertVoteBot'
+    launchScript()
 }
 
 bootRun {
     args System.getProperty("exec.args", "").split()
+    main = 'org.cacert.votebot.vote.CAcertVoteBot'
 }
 
-bootRepackage {
-    executable = true
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.6'
 }
