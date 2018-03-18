@@ -1,3 +1,4 @@
 *	text=auto
 *.java	text
 *.jar	binary
+*.bat   text eol=crlf
