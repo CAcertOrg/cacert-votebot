@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018  Jan Dittberner
+ * Copyright (c) 2018  Jan Dittberner
  *
  * This file is part of CAcert VoteBot.
  *
@@ -252,7 +252,7 @@ public class IRCClientTest {
     }
 
     @Test
-    public void testFailPrivateMessageToSelf() throws Exception {
+    public void testFailPrivateMessageToSelf() {
         try {
             client.sendPrivate("Test message", "test/nick");
             fail("Expected IRC client exception for private message to invalid nick not thrown.");

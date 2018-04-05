@@ -99,12 +99,14 @@ public class CAcertVoteBot extends IRCBot implements Runnable, CommandLineRunner
         try {
             getIrcClient().initializeFromArgs(args).assignBot(this);
 
+            Thread.sleep(Duration.ofSeconds(3).toMillis());
             getIrcClient().join(meetingChannel);
+            Thread.sleep(Duration.ofSeconds(1).toMillis());
             getIrcClient().join(voteChannel);
 
             new Thread(this).start();
         } catch (IOException | InterruptedException | ParseException | IRCClientException e) {
-            LOGGER.error(String.format("error running votebot %s", e.getMessage()));
+            LOGGER.error(MessageFormat.format(messages.getString("error_running_votebot"), e.getMessage()));
         }
     }
 
@@ -142,7 +144,7 @@ public class CAcertVoteBot extends IRCBot implements Runnable, CommandLineRunner
     }
 
     private void sendUnknownCommand(String from, String command) throws IRCClientException {
-        sendPrivateMessage(from, String.format(messages.getString("unknown_command"), command));
+        sendPrivateMessage(from, MessageFormat.format(messages.getString("unknown_command"), command));
     }
 
     private void giveHelp(String from) throws IRCClientException {
@@ -180,11 +182,15 @@ public class CAcertVoteBot extends IRCBot implements Runnable, CommandLineRunner
                 }
 
                 Thread.sleep(warn * MILLIS_ONE_SECOND);
-                announce("Voting on " + voteMechanics.getTopic() + " will end in " + (timeout - warn) + " seconds.");
+                String topic = voteMechanics.getTopic();
+                announce(MessageFormat.format(
+                        messages.getString("voting_will_end_in_n_seconds"),
+                        topic, timeout - warn));
                 Thread.sleep((timeout - warn) * MILLIS_ONE_SECOND);
-                announce("Voting on " + voteMechanics.getTopic() + " has closed.");
+                announce(MessageFormat.format(
+                        messages.getString("voting_has_closed"), topic));
                 final String[] res = voteMechanics.closeVote();
-                announce("Results: for " + voteMechanics.getTopic() + ":");
+                announce(MessageFormat.format(messages.getString("results_for_vote"), topic));
 
                 for (final String re : res) {
                     announce(re);

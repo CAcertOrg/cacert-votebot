@@ -131,7 +131,7 @@ public class IRCClient {
             socket = new Socket(server, port); // default-plain = 6667
         }
 
-        out = new PrintWriter(socket.getOutputStream(), true);
+        out = new CRLFPrintWriter(socket.getOutputStream(), true);
         final BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
         new ServerReader(in);
@@ -227,6 +227,9 @@ public class IRCClient {
         checkChannelPreconditions(channel);
 
         for (String line : msg.split("\n")) {
+            if (line.length() == 0) {
+                line = " ";
+            }
             out.println(String.format("PRIVMSG #%s :%s", channel, line));
         }
     }
@@ -242,6 +245,9 @@ public class IRCClient {
         checkPrivateMessagePreconditions(to);
 
         for (String line : msg.split("\n")) {
+            if (line.length() == 0) {
+                line = " ";
+            }
             out.println(String.format("PRIVMSG %s :%s", to, line));
         }
     }
