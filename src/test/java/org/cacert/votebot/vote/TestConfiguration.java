@@ -16,27 +16,26 @@
  * You should have received a copy of the GNU General Public License along with
  * CAcert VoteBot.  If not, see <http://www.gnu.org/licenses/>.
  */
+package org.cacert.votebot.vote;
 
-package org.cacert.votebot.shared.exceptions;
+import org.cacert.votebot.shared.CAcertVoteMechanics;
+import org.cacert.votebot.shared.IRCClient;
+import org.mockito.Mockito;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
-import org.junit.Test;
+@Configuration
+public class TestConfiguration {
+    @Bean
+    @Primary
+    public CAcertVoteMechanics getTestVoteMechanics() {
+        return Mockito.mock(CAcertVoteMechanics.class);
+    }
 
-import java.text.MessageFormat;
-import java.util.ResourceBundle;
-
-import static org.junit.Assert.assertEquals;
-
-/**
- * @author Jan Dittberner
- */
-public class InvalidChannelNameTest {
-    @Test
-    public void testConstructor() {
-        final InvalidChannelName e = new InvalidChannelName("test");
-        assertEquals(
-                e.getMessage(),
-                MessageFormat.format(
-                        ResourceBundle.getBundle("messages").getString("invalid_channel_name"),
-                        "test"));
+    @Bean
+    @Primary
+    public IRCClient getTestIrcClient() {
+        return Mockito.mock(IRCClient.class);
     }
 }

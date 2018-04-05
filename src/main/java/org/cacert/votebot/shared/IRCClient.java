@@ -1,32 +1,26 @@
 /*
  * Copyright (c) 2015  Felix Doerre
  * Copyright (c) 2015  Benny Baumann
- * Copyright (c) 2016  Jan Dittberner
+ * Copyright (c) 2016, 2018  Jan Dittberner
  *
- * This file is part of CAcert votebot.
+ * This file is part of CAcert VoteBot.
  *
- * CAcert votebot is free software: you can redistribute it and/or modify it
+ * CAcert VoteBot is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
  * Software Foundation, either version 3 of the License, or (at your option)
  * any later version.
  *
- * CAcert votebot is distributed in the hope that it will be useful, but
+ * CAcert VoteBot is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * CAcert votebot.  If not, see <http://www.gnu.org/licenses/>.
+ * CAcert VoteBot.  If not, see <http://www.gnu.org/licenses/>.
  */
 package org.cacert.votebot.shared;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.*;
 import org.cacert.votebot.shared.exceptions.IRCClientException;
 import org.cacert.votebot.shared.exceptions.InvalidChannelName;
 import org.cacert.votebot.shared.exceptions.InvalidNickName;
@@ -50,13 +44,9 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Semaphore;
+import java.util.regex.Pattern;
 
 /**
  * This class encapsulates the communication with the IRC server.
@@ -66,7 +56,7 @@ import java.util.concurrent.Semaphore;
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 @Component
-public final class IRCClient {
+public class IRCClient {
     /**
      * Logger.
      */
@@ -74,13 +64,13 @@ public final class IRCClient {
     /**
      * Regular expression to validate IRC nick names.
      */
-    private static final String NICK_RE = "[a-zA-Z0-9_-]+";
+    private static final Pattern NICK_RE = Pattern.compile("[a-zA-Z0-9_-]+");
     /**
      * Regular expression to validate IRC channel names.
      */
-    private static final String CHANNEL_RE = "[a-zA-Z0-9_-]+";
+    private static final Pattern CHANNEL_RE = Pattern.compile("[a-zA-Z0-9_-]+");
 
-    private final Semaphore loggedin = new Semaphore(0);
+    private final Semaphore loggedin = new Semaphore(1);
     private PrintWriter out;
     private final Set<String> joinedChannels = new HashSet<>();
     private IRCBot targetBot;
@@ -130,7 +120,7 @@ public final class IRCClient {
     private void initialize(final String nick, final String server, final int port, final boolean ssl)
     throws IOException,
             InterruptedException, IRCClientException {
-        if (!nick.matches(NICK_RE)) {
+        if (!NICK_RE.matcher(nick).matches()) {
             throw new IRCClientException(String.format("malformed nickname %s", nick));
         }
 
@@ -146,8 +136,8 @@ public final class IRCClient {
 
         new ServerReader(in);
 
-        out.println("USER " + nick + " 0 * :unknown");
         out.println("NICK " + nick);
+        out.println("USER " + nick + " 0 * :CAcert Votebot");
 
         loggedin.acquire();
     }
@@ -164,7 +154,7 @@ public final class IRCClient {
             throw new NoBotAssigned();
         }
 
-        if (!channel.matches(CHANNEL_RE)) {
+        if (!CHANNEL_RE.matcher(channel).matches()) {
             throw new InvalidChannelName(channel);
         }
     }
@@ -181,7 +171,7 @@ public final class IRCClient {
             throw new NoBotAssigned();
         }
 
-        if (!nick.matches(NICK_RE)) {
+        if (!NICK_RE.matcher(nick).matches()) {
             throw new InvalidNickName(nick);
         }
     }
@@ -236,7 +226,9 @@ public final class IRCClient {
     public void send(final String msg, final String channel) throws IRCClientException {
         checkChannelPreconditions(channel);
 
-        out.println(String.format("PRIVMSG #%s :%s", channel, msg));
+        for (String line : msg.split("\n")) {
+            out.println(String.format("PRIVMSG #%s :%s", channel, line));
+        }
     }
 
     /**
@@ -249,7 +241,9 @@ public final class IRCClient {
     public void sendPrivate(final String msg, final String to) throws IRCClientException {
         checkPrivateMessagePreconditions(to);
 
-        out.println(String.format("PRIVMSG %s :%s", to, msg));
+        for (String line : msg.split("\n")) {
+            out.println(String.format("PRIVMSG %s :%s", to, line));
+        }
     }
 
     /**
@@ -259,6 +253,14 @@ public final class IRCClient {
      */
     public void assignBot(final IRCBot bot) {
         targetBot = bot;
+    }
+
+
+    /**
+     * Quit the IRC session.
+     */
+    public void quit() {
+        out.println("QUIT");
     }
 
     /**
@@ -271,7 +273,9 @@ public final class IRCClient {
         ServerReader(final BufferedReader bufferedReader) {
             this.bufferedReader = bufferedReader;
 
-            new Thread(this).start();
+            Thread serverReader = new Thread(this);
+            serverReader.setName("irc-client-thread");
+            serverReader.start();
         }
 
         @Override

@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2015  Felix Doerre
  * Copyright (c) 2015  Benny Baumann
- * Copyright (c) 2016  Jan Dittberner
+ * Copyright (c) 2016, 2018  Jan Dittberner
  *
- * This file is part of CAcert votebot.
+ * This file is part of CAcert VoteBot.
  *
- * CAcert votebot is free software: you can redistribute it and/or modify it
+ * CAcert VoteBot is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
  * Software Foundation, either version 3 of the License, or (at your option)
  * any later version.
  *
- * CAcert votebot is distributed in the hope that it will be useful, but
+ * CAcert VoteBot is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * CAcert votebot.  If not, see <http://www.gnu.org/licenses/>.
+ * CAcert VoteBot.  If not, see <http://www.gnu.org/licenses/>.
  */
 package org.cacert.votebot.vote;
 
@@ -36,10 +36,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.text.MessageFormat;
+import java.time.Duration;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 
 /**
- * Vote bot.
+ * VoteBot main class.
  *
  * @author Felix Doerre
  * @author Jan Dittberner
@@ -48,37 +52,42 @@ import java.io.IOException;
 @Component
 public class CAcertVoteBot extends IRCBot implements Runnable, CommandLineRunner {
     private static final Logger LOGGER = LoggerFactory.getLogger(CAcertVoteBot.class);
-    private static final int MILLIS_ONE_SECOND = 1000;
+    private static final long MILLIS_ONE_SECOND = Duration.ofSeconds(1).toMillis();
+    private final ResourceBundle messages = ResourceBundle.getBundle("messages");
 
     /**
      * Meeting channel where votes and results are published.
      */
-    @Value("${voteBot.meetingChn}")
+    @Value("${voteBot.meetingChn:meeting}")
     private String meetingChannel;
 
     /**
      * Channel name where voting is performed.
      */
-    @Value("${voteBot.voteChn}")
+    @Value("${voteBot.voteChn:vote}")
     private String voteChannel;
 
     /**
      * Seconds to warn before a vote ends.
      */
-    @Value("${voteBot.warnSecs}")
+    @Value("${voteBot.warnSecs:90}")
     private long warn;
 
     /**
      * Seconds before a vote times out.
      */
-    @Value("${voteBot.timeoutSecs}")
+    @Value("${voteBot.timeoutSecs:120}")
     private long timeout;
 
-    @Autowired
-    private CAcertVoteMechanics voteMechanics;
+    private final CAcertVoteMechanics voteMechanics;
+
+    private final IRCClient ircClient;
 
     @Autowired
-    private IRCClient ircClient;
+    public CAcertVoteBot(CAcertVoteMechanics voteMechanics, IRCClient ircClient) {
+        this.voteMechanics = voteMechanics;
+        this.ircClient = ircClient;
+    }
 
     /**
      * {@inheritDoc}
@@ -114,18 +123,46 @@ public class CAcertVoteBot extends IRCBot implements Runnable, CommandLineRunner
 
     @Override
     public final synchronized void privateMessage(final String from, final String message) throws IRCClientException {
-        if (message.startsWith("vote ")) {
-            final String response = voteMechanics.callVote(message.substring(5));
-            sendPrivateMessage(from, response);
-
-            if (response.startsWith("Sorry,")) {
-                return;
+        if (message != null && message.length() > 0) {
+            String[] parts = message.split("\\s+", 2);
+            try {
+                VoteBotCommand command = VoteBotCommand.valueOf(parts[0].toUpperCase(Locale.ENGLISH));
+                switch (command) {
+                    case VOTE:
+                        startVote(from, parts[1]);
+                        break;
+                    case HELP:
+                        giveHelp(from);
+                        break;
+                }
+            } catch (IllegalArgumentException e) {
+                sendUnknownCommand(from, parts[0]);
             }
-
-            announce("New Vote: " + from + " has started a vote on \"" + voteMechanics.getTopic() + "\"");
-            sendPublicMessage(meetingChannel, "Please cast your vote in #vote");
-            sendPublicMessage(voteChannel, "Please cast your vote in the next " + timeout + " seconds.");
         }
+    }
+
+    private void sendUnknownCommand(String from, String command) throws IRCClientException {
+        sendPrivateMessage(from, String.format(messages.getString("unknown_command"), command));
+    }
+
+    private void giveHelp(String from) throws IRCClientException {
+        sendPrivateMessage(from, messages.getString("help_message"));
+    }
+
+    private void startVote(final String from, final String message) throws IRCClientException {
+        final String response = voteMechanics.callVote(message);
+        sendPrivateMessage(from, response);
+
+        if (response.startsWith("Sorry,")) {
+            return;
+        }
+
+        announce(MessageFormat.format(messages.getString("new_vote"), from, voteMechanics.getTopic()));
+        sendPublicMessage(
+                meetingChannel,
+                MessageFormat.format(messages.getString("cast_vote_in_vote_channel"), voteChannel));
+        sendPublicMessage(
+                voteChannel, MessageFormat.format(messages.getString("cast_vote_in_next_seconds"), timeout));
     }
 
     private synchronized void announce(final String msg) throws IRCClientException {

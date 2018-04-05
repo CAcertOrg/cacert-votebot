@@ -1,20 +1,20 @@
 /*
- * Copyright (c) 2016. Jan Dittberner
+ * Copyright (c) 2016, 2018. Jan Dittberner
  *
- * This file is part of CAcert votebot.
+ * This file is part of CAcert VoteBot.
  *
- * CAcert votebot is free software: you can redistribute it and/or modify it
+ * CAcert VoteBot is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
  * Software Foundation, either version 3 of the License, or (at your option)
  * any later version.
  *
- * CAcert votebot is distributed in the hope that it will be useful, but
+ * CAcert VoteBot is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * CAcert votebot.  If not, see <http://www.gnu.org/licenses/>.
+ * CAcert VoteBot.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 package org.cacert.votebot.shared;
@@ -24,6 +24,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -36,7 +37,7 @@ import static org.cacert.votebot.shared.CAcertVoteMechanics.State.RUNNING;
  */
 public class CAcertVoteMechanicsTest {
     private CAcertVoteMechanics subject;
-    private ResourceBundle resourceBundle;
+    private ResourceBundle messages;
 
     @Test
     public void testStateEnum() {
@@ -49,20 +50,20 @@ public class CAcertVoteMechanicsTest {
 
     @Before
     public void setup() {
-        resourceBundle = ResourceBundle.getBundle("messages");
+        messages = ResourceBundle.getBundle("messages");
         subject = new CAcertVoteMechanics();
     }
 
     @Test
     public void testNoVote() {
         String response = subject.evaluateVote("alice", "test");
-        Assert.assertEquals(String.format(resourceBundle.getString("no_vote_running"), "alice"), response);
+        Assert.assertEquals(MessageFormat.format(messages.getString("no_vote_running"), "alice"), response);
     }
 
     @Test
     public void testCallVote() {
         String response = subject.callVote("test vote");
-        Assert.assertEquals(resourceBundle.getString("vote_started"), response);
+        Assert.assertEquals(messages.getString("vote_started"), response);
         Assert.assertEquals("test vote", subject.getTopic());
         Assert.assertEquals(RUNNING, subject.getState());
     }
@@ -71,7 +72,7 @@ public class CAcertVoteMechanicsTest {
     public void testRefuseParallelCallVote() {
         subject.callVote("first");
         String response = subject.callVote("second");
-        Assert.assertEquals(resourceBundle.getString("vote_running"), response);
+        Assert.assertEquals(messages.getString("vote_running"), response);
         Assert.assertEquals("first", subject.getTopic());
         Assert.assertEquals(RUNNING, subject.getState());
     }
@@ -86,7 +87,8 @@ public class CAcertVoteMechanicsTest {
     public void testVote() {
         subject.callVote("test");
         String response = subject.evaluateVote("alice", "aye");
-        Assert.assertEquals(String.format(resourceBundle.getString("count_vote"), "alice", "AYE"), response);
+        Assert.assertEquals(
+                MessageFormat.format(messages.getString("count_vote"), "alice", "AYE"), response);
         Assert.assertEquals("{alice=AYE}", subject.getCurrentResult());
     }
 
@@ -95,7 +97,8 @@ public class CAcertVoteMechanicsTest {
         subject.callVote("test");
         String response = subject.evaluateVote("alice", "proxy bob aye");
         Assert.assertEquals(
-                String.format(resourceBundle.getString("count_proxy_vote"), "alice", "bob", "AYE"), response);
+                MessageFormat.format(messages.getString("count_proxy_vote"), "alice", "bob", "AYE"),
+                response);
         Assert.assertEquals("{bob=AYE}", subject.getCurrentResult());
     }
 
@@ -103,7 +106,8 @@ public class CAcertVoteMechanicsTest {
     public void testInvalidVote() {
         subject.callVote("test");
         String response = subject.evaluateVote("alice", "moo");
-        Assert.assertEquals(String.format(resourceBundle.getString("vote_not_understood"), "alice"), response);
+        Assert.assertEquals(
+                MessageFormat.format(messages.getString("vote_not_understood"), "alice"), response);
         Assert.assertEquals("{}", subject.getCurrentResult());
     }
 
@@ -111,10 +115,12 @@ public class CAcertVoteMechanicsTest {
     public void testChangeVote() {
         subject.callVote("test");
         String response = subject.evaluateVote("alice", "aye");
-        Assert.assertEquals(String.format(resourceBundle.getString("count_vote"), "alice", "AYE"), response);
+        Assert.assertEquals(
+                MessageFormat.format(messages.getString("count_vote"), "alice", "AYE"), response);
         Assert.assertEquals("{alice=AYE}", subject.getCurrentResult());
         response = subject.evaluateVote("alice", "naye");
-        Assert.assertEquals(String.format(resourceBundle.getString("count_vote"), "alice", "NAYE"), response);
+        Assert.assertEquals(
+                MessageFormat.format(messages.getString("count_vote"), "alice", "NAYE"), response);
         Assert.assertEquals("{alice=NAYE}", subject.getCurrentResult());
     }
 
@@ -122,10 +128,12 @@ public class CAcertVoteMechanicsTest {
     public void testNoChangeForInvalidVote() {
         subject.callVote("test");
         String response = subject.evaluateVote("alice", "aye");
-        Assert.assertEquals(String.format(resourceBundle.getString("count_vote"), "alice", "AYE"), response);
+        Assert.assertEquals(
+                MessageFormat.format(messages.getString("count_vote"), "alice", "AYE"), response);
         Assert.assertEquals("{alice=AYE}", subject.getCurrentResult());
         response = subject.evaluateVote("alice", "moo");
-        Assert.assertEquals(String.format(resourceBundle.getString("vote_not_understood"), "alice"), response);
+        Assert.assertEquals(
+                MessageFormat.format(messages.getString("vote_not_understood"), "alice"), response);
         Assert.assertEquals("{alice=AYE}", subject.getCurrentResult());
     }
 
@@ -133,7 +141,8 @@ public class CAcertVoteMechanicsTest {
     public void testInvalidProxyVote() {
         subject.callVote("test");
         String response = subject.evaluateVote("alice", "proxy bob moo");
-        Assert.assertEquals(String.format(resourceBundle.getString("vote_not_understood"), "alice"), response);
+        Assert.assertEquals(
+                MessageFormat.format(messages.getString("vote_not_understood"), "alice"), response);
         Assert.assertEquals("{}", subject.getCurrentResult());
     }
 
@@ -141,7 +150,8 @@ public class CAcertVoteMechanicsTest {
     public void testInvalidProxyVoteTokenCount() {
         subject.callVote("test");
         String response = subject.evaluateVote("alice", "proxy ");
-        Assert.assertEquals(String.format(resourceBundle.getString("invalid_proxy_vote"), "alice"), response);
+        Assert.assertEquals(
+                MessageFormat.format(messages.getString("invalid_proxy_vote"), "alice"), response);
         Assert.assertEquals("{}", subject.getCurrentResult());
     }
 

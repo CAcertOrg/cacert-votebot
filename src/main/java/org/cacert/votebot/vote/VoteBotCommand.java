@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2015  Felix Doerre
+ * Copyright (c) 2015  Benny Baumann
  * Copyright (c) 2016, 2018  Jan Dittberner
  *
  * This file is part of CAcert VoteBot.
@@ -16,27 +18,15 @@
  * You should have received a copy of the GNU General Public License along with
  * CAcert VoteBot.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-package org.cacert.votebot.shared.exceptions;
-
-import org.junit.Test;
-
-import java.text.MessageFormat;
-import java.util.ResourceBundle;
-
-import static org.junit.Assert.assertEquals;
+package org.cacert.votebot.vote;
 
 /**
+ * Enumeration of supported VoteBot commands.
+ *
+ * @since 0.2.0
  * @author Jan Dittberner
  */
-public class InvalidChannelNameTest {
-    @Test
-    public void testConstructor() {
-        final InvalidChannelName e = new InvalidChannelName("test");
-        assertEquals(
-                e.getMessage(),
-                MessageFormat.format(
-                        ResourceBundle.getBundle("messages").getString("invalid_channel_name"),
-                        "test"));
-    }
+public enum VoteBotCommand {
+    VOTE,
+    HELP
 }

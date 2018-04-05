@@ -1,45 +1,47 @@
 /*
  * Copyright (c) 2015  Felix Doerre
  * Copyright (c) 2015  Benny Baumann
- * Copyright (c) 2016  Jan Dittberner
+ * Copyright (c) 2016, 2018  Jan Dittberner
  *
- * This file is part of CAcert votebot.
+ * This file is part of CAcert VoteBot.
  *
- * CAcert votebot is free software: you can redistribute it and/or modify it
+ * CAcert VoteBot is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
  * Software Foundation, either version 3 of the License, or (at your option)
  * any later version.
  *
- * CAcert votebot is distributed in the hope that it will be useful, but
+ * CAcert VoteBot is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * CAcert votebot.  If not, see <http://www.gnu.org/licenses/>.
+ * CAcert VoteBot.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 package org.cacert.votebot.shared;
 
 import org.springframework.stereotype.Component;
 
+import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.ResourceBundle;
+import java.util.regex.Pattern;
 
 /**
  * Represents the voting-automate for voting in IRC channels.
  */
 @Component
-public final class CAcertVoteMechanics {
-    private static final String PROXY_RE = "^\\s*proxy\\s.*";
+public class CAcertVoteMechanics {
+    private static final Pattern PROXY_RE = Pattern.compile("^\\s*proxy\\s.*");
     private static final int VOTE_MESSAGE_PART_COUNT = 3;
 
     private State state = State.IDLE;
     private String topic;
     private final Map<String, VoteType> votes = new HashMap<>();
-    private final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
+    private final ResourceBundle messages = ResourceBundle.getBundle("messages");
 
     /**
      * Voting state indicating whether a vote is currently running or not.
@@ -59,18 +61,18 @@ public final class CAcertVoteMechanics {
         votes.put(voter, type);
 
         if (voter.equals(actor)) {
-            return String.format(resourceBundle.getString("count_vote"), actor, type);
+            return MessageFormat.format(messages.getString("count_vote"), actor, type);
         } else {
-            return String.format(resourceBundle.getString("count_proxy_vote"), actor, voter, type);
+            return MessageFormat.format(messages.getString("count_proxy_vote"), actor, voter, type);
         }
     }
 
     private String voteError(final String actor) {
-        return String.format(resourceBundle.getString("vote_not_understood"), actor);
+        return MessageFormat.format(messages.getString("vote_not_understood"), actor);
     }
 
     private String proxyVoteError(final String actor) {
-        return String.format(resourceBundle.getString("invalid_proxy_vote"), actor);
+        return MessageFormat.format(messages.getString("invalid_proxy_vote"), actor);
     }
 
     /**
@@ -82,13 +84,13 @@ public final class CAcertVoteMechanics {
      */
     public synchronized String evaluateVote(final String actor, final String txt) {
         if (state != State.RUNNING) {
-            return String.format(resourceBundle.getString("no_vote_running"), actor);
+            return MessageFormat.format(messages.getString("no_vote_running"), actor);
         }
 
         final String voter;
         final String value;
 
-        if (txt.toLowerCase().matches(PROXY_RE)) {
+        if (PROXY_RE.matcher(txt.toLowerCase()).matches()) {
             String[] parts = txt.split("\\s+");
             if (parts.length == VOTE_MESSAGE_PART_COUNT) {
                 voter = parts[1];
@@ -116,7 +118,7 @@ public final class CAcertVoteMechanics {
      */
     public synchronized String callVote(final String topic) {
         if (state != State.IDLE) {
-            return resourceBundle.getString("vote_running");
+            return messages.getString("vote_running");
         }
 
         this.topic = topic;
@@ -124,7 +126,7 @@ public final class CAcertVoteMechanics {
 
         state = State.RUNNING;
 
-        return resourceBundle.getString("vote_started");
+        return messages.getString("vote_started");
     }
 
     /**
@@ -142,7 +144,7 @@ public final class CAcertVoteMechanics {
         final String[] results = new String[VoteType.values().length];
 
         for (int i = 0; i < results.length; i++) {
-            results[i] = String.format("%s: %d", VoteType.values()[i], resultCounts[i]);
+            results[i] = MessageFormat.format("{0}: {1}", VoteType.values()[i], resultCounts[i]);
         }
 
         votes.clear();
