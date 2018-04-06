@@ -152,7 +152,7 @@ public class CAcertVoteMechanics {
         votes.clear();
 
         this.warnTime = Calendar.getInstance();
-        this.warnTime.add(Calendar.SECOND, Math.toIntExact(timeout - warn));
+        this.warnTime.add(Calendar.SECOND, Math.toIntExact(warn));
         this.warned = false;
 
         this.endTime = Calendar.getInstance();
