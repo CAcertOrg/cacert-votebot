@@ -24,6 +24,7 @@ package org.cacert.votebot.shared;
 import org.springframework.stereotype.Component;
 
 import java.text.MessageFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -43,18 +44,42 @@ public class CAcertVoteMechanics {
     private final Map<String, VoteType> votes = new HashMap<>();
     private final ResourceBundle messages = ResourceBundle.getBundle("messages");
 
+    public Calendar getWarnTime() {
+        return warnTime;
+    }
+
+    public Calendar getEndTime() {
+        return endTime;
+    }
+
+    private Calendar warnTime;
+    private Calendar endTime;
+    private boolean warned;
+
+    public boolean isWarned() {
+        return warned;
+    }
+
+    public synchronized void setWarned() {
+        this.warned = true;
+    }
+
     /**
      * Voting state indicating whether a vote is currently running or not.
      */
     public enum State {
         /**
+         * No vote is running.
+         */
+        IDLE,
+        /**
          * A vote is currently running.
          */
         RUNNING,
         /**
-         * No vote is running.
+         * A vote is about to stop.
          */
-        IDLE
+        STOPPING
     }
 
     private String vote(final String voter, final String actor, final VoteType type) {
@@ -114,9 +139,11 @@ public class CAcertVoteMechanics {
      * A new vote begins.
      *
      * @param topic the topic of the vote
+     * @param warn seconds before the end of the vote to issue a warning
+     * @param timeout seconds from the current time to the end of the vote
      * @return A response to <code>from</code> indicating success or failure.
      */
-    public synchronized String callVote(final String topic) {
+    public synchronized String callVote(final String topic, long warn, long timeout) {
         if (state != State.IDLE) {
             return messages.getString("vote_running");
         }
@@ -124,9 +151,26 @@ public class CAcertVoteMechanics {
         this.topic = topic;
         votes.clear();
 
+        this.warnTime = Calendar.getInstance();
+        this.warnTime.add(Calendar.SECOND, Math.toIntExact(timeout - warn));
+        this.warned = false;
+
+        this.endTime = Calendar.getInstance();
+        this.endTime.add(Calendar.SECOND, Math.toIntExact(timeout));
+
         state = State.RUNNING;
 
         return messages.getString("vote_started");
+    }
+
+    public synchronized String stopVote(String stopSource) {
+        if (state != State.RUNNING) {
+            throw new IllegalStateException(messages.getString("no_vote_running_private"));
+        }
+
+        state = State.STOPPING;
+
+        return MessageFormat.format(messages.getString("finishing_vote"), this.topic, stopSource);
     }
 
     /**
@@ -135,13 +179,17 @@ public class CAcertVoteMechanics {
      * @return An array of Strings containing result status messages.
      */
     public synchronized String[] closeVote() {
+        final String[] results = new String[VoteType.values().length];
+
+        if (state != State.STOPPING) {
+            throw new IllegalStateException(messages.getString("cannot_close_running_vote"));
+        }
+
         final int[] resultCounts = new int[VoteType.values().length];
 
         for (final Entry<String, VoteType> voteEntry : votes.entrySet()) {
             resultCounts[voteEntry.getValue().ordinal()]++;
         }
-
-        final String[] results = new String[VoteType.values().length];
 
         for (int i = 0; i < results.length; i++) {
             results[i] = MessageFormat.format("{0}: {1}", VoteType.values()[i], resultCounts[i]);

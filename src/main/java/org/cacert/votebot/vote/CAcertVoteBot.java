@@ -22,7 +22,6 @@ package org.cacert.votebot.vote;
 
 import org.apache.commons.cli.ParseException;
 import org.cacert.votebot.shared.CAcertVoteMechanics;
-import org.cacert.votebot.shared.CAcertVoteMechanics.State;
 import org.cacert.votebot.shared.IRCBot;
 import org.cacert.votebot.shared.IRCClient;
 import org.cacert.votebot.shared.exceptions.IRCClientException;
@@ -38,6 +37,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.time.Duration;
+import java.util.Calendar;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -52,7 +52,6 @@ import java.util.ResourceBundle;
 @Component
 public class CAcertVoteBot extends IRCBot implements Runnable, CommandLineRunner {
     private static final Logger LOGGER = LoggerFactory.getLogger(CAcertVoteBot.class);
-    private static final long MILLIS_ONE_SECOND = Duration.ofSeconds(1).toMillis();
     private final ResourceBundle messages = ResourceBundle.getBundle("messages");
 
     /**
@@ -136,10 +135,28 @@ public class CAcertVoteBot extends IRCBot implements Runnable, CommandLineRunner
                     case HELP:
                         giveHelp(from);
                         break;
+                    case CANCEL:
+                        cancelVote(from);
+                        break;
                 }
             } catch (IllegalArgumentException e) {
                 sendUnknownCommand(from, parts[0]);
             }
+        }
+    }
+
+    /**
+     * Cancel a running vote before the end of the voting period.
+     *
+     * @param from initiator of the cancel command
+     */
+    private void cancelVote(String from) throws IRCClientException {
+        LOGGER.debug(String.format("received cancel vote command from %s", from));
+        try {
+            announce(voteMechanics.stopVote(from));
+            sendPrivateMessage(from, messages.getString("vote_canceled"));
+        } catch (IllegalStateException e) {
+            sendPrivateMessage(from, e.getMessage());
         }
     }
 
@@ -152,7 +169,7 @@ public class CAcertVoteBot extends IRCBot implements Runnable, CommandLineRunner
     }
 
     private void startVote(final String from, final String message) throws IRCClientException {
-        final String response = voteMechanics.callVote(message);
+        final String response = voteMechanics.callVote(message, warn, timeout);
         sendPrivateMessage(from, response);
 
         if (response.startsWith("Sorry,")) {
@@ -177,23 +194,35 @@ public class CAcertVoteBot extends IRCBot implements Runnable, CommandLineRunner
         try {
             //noinspection InfiniteLoopStatement
             while (true) {
-                while (voteMechanics.getState() == State.IDLE) {
-                    Thread.sleep(MILLIS_ONE_SECOND);
-                }
-
-                Thread.sleep(warn * MILLIS_ONE_SECOND);
+                Thread.sleep(Duration.ofSeconds(1).toMillis());
                 String topic = voteMechanics.getTopic();
-                announce(MessageFormat.format(
-                        messages.getString("voting_will_end_in_n_seconds"),
-                        topic, timeout - warn));
-                Thread.sleep((timeout - warn) * MILLIS_ONE_SECOND);
-                announce(MessageFormat.format(
-                        messages.getString("voting_has_closed"), topic));
-                final String[] res = voteMechanics.closeVote();
-                announce(MessageFormat.format(messages.getString("results_for_vote"), topic));
 
-                for (final String re : res) {
-                    announce(re);
+                switch (voteMechanics.getState()) {
+                    case IDLE:
+                        break;
+                    case RUNNING:
+                        Calendar now = Calendar.getInstance();
+                        if (now.after(voteMechanics.getEndTime())) {
+                            announce(voteMechanics.stopVote("timeout"));
+                        } else if (now.after(voteMechanics.getWarnTime()) && !voteMechanics.isWarned()) {
+                            announce(MessageFormat.format(
+                                    messages.getString("voting_will_end_in_n_seconds"),
+                                    topic, timeout - warn));
+                            voteMechanics.setWarned();
+                        }
+                        break;
+                    case STOPPING:
+                        announce(MessageFormat.format(
+                                messages.getString("voting_has_closed"), topic));
+                        final String[] res = voteMechanics.closeVote();
+                        announce(MessageFormat.format(messages.getString("results_for_vote"), topic));
+
+                        for (final String re : res) {
+                            announce(re);
+                        }
+                        break;
+                    default:
+                        throw new IllegalStateException(messages.getString("illegal_vote_mechanics_state"));
                 }
             }
         } catch (final InterruptedException | IRCClientException e) {

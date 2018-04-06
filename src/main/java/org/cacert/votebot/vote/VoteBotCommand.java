@@ -28,5 +28,6 @@ package org.cacert.votebot.vote;
  */
 public enum VoteBotCommand {
     VOTE,
-    HELP
+    HELP,
+    CANCEL
 }

@@ -56,11 +56,12 @@ public class CAcertVoteBotTest {
         ReflectionTestUtils.setField(bot, "meetingChannel", "meeting");
         ReflectionTestUtils.setField(bot, "voteChannel", "vote");
         ReflectionTestUtils.setField(bot, "timeout", 120);
+        ReflectionTestUtils.setField(bot, "warn", 30);
     }
 
     @Test
     public void testStartVoteBot() throws Exception {
-        when(mechanics.callVote(TEST_VOTE_TOPIC)).thenReturn(messages.getString("vote_started"));
+        when(mechanics.callVote(TEST_VOTE_TOPIC, 30, 120)).thenReturn(messages.getString("vote_started"));
         when(mechanics.getTopic()).thenReturn(TEST_VOTE_TOPIC);
         bot.privateMessage("test", String.format("vote %s", TEST_VOTE_TOPIC));
         verify(ircClient).send(
