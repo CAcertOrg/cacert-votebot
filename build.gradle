@@ -28,7 +28,7 @@ plugins {
 }
 
 apply plugin: 'java'
-apply plugin: 'io.spring.dependency-management'
+apply plugin: 'org.springframework.boot'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -38,6 +38,7 @@ repositories {
 }
 
 dependencies {
+    implementation platform(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES)
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("commons-cli:commons-cli:1.4")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -48,8 +49,16 @@ version = '0.3.0-SNAPSHOT'
 description = "IRC vote bot for CAcert.org"
 
 bootJar {
-    mainClassName = 'org.cacert.votebot.vote.CAcertVoteBot'
+    mainClass = 'org.cacert.votebot.vote.CAcertVoteBot'
     launchScript()
+}
+
+springBoot {
+    buildInfo()
+}
+
+test {
+    useJUnitPlatform()
 }
 
 bootRun {
