@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018  Jan Dittberner
+ * Copyright (c) 2016-2020  Jan Dittberner
  *
  * This file is part of CAcert VoteBot.
  *
@@ -19,12 +19,12 @@
 
 package org.cacert.votebot.shared.exceptions;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.text.MessageFormat;
 import java.util.ResourceBundle;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Jan Dittberner

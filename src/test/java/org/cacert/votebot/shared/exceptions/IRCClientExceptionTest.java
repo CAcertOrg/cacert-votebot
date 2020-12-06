@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016. Jan Dittberner
+ * Copyright (c) 2016-2020. Jan Dittberner
  *
  * This file is part of CAcert votebot.
  *
@@ -19,8 +19,9 @@
 
 package org.cacert.votebot.shared.exceptions;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Tests for {@link IRCClientException}.
@@ -32,7 +33,7 @@ public class IRCClientExceptionTest {
     @Test
     public void testConstructor() {
         final IRCClientException e = new IRCClientException("test");
-        Assert.assertEquals("test", e.getMessage());
+        assertEquals("test", e.getMessage());
     }
 
 }

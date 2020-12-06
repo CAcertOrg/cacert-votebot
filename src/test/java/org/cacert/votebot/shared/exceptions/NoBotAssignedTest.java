@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016. Jan Dittberner
+ * Copyright (c) 2016-2020. Jan Dittberner
  *
  * This file is part of CAcert votebot.
  *
@@ -19,10 +19,11 @@
 
 package org.cacert.votebot.shared.exceptions;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ResourceBundle;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Tests for {@link NoBotAssigned}.
@@ -35,6 +36,6 @@ public class NoBotAssignedTest {
     public void testConstructor() {
         final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages");
         final NoBotAssigned e = new NoBotAssigned();
-        Assert.assertEquals(resourceBundle.getString("assign_bot_not_called"), e.getMessage());
+        assertEquals(resourceBundle.getString("assign_bot_not_called"), e.getMessage());
     }
 }

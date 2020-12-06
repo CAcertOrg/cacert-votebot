@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018. Jan Dittberner
+ * Copyright (c) 2016-2020. Jan Dittberner
  *
  * This file is part of CAcert VoteBot.
  *
@@ -20,21 +20,18 @@
 package org.cacert.votebot.shared;
 
 import org.cacert.votebot.shared.CAcertVoteMechanics.State;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
 
-import static org.cacert.votebot.shared.CAcertVoteMechanics.State.IDLE;
-import static org.cacert.votebot.shared.CAcertVoteMechanics.State.RUNNING;
-import static org.cacert.votebot.shared.CAcertVoteMechanics.State.STOPPING;
+import static org.cacert.votebot.shared.CAcertVoteMechanics.State.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Jan Dittberner
@@ -48,14 +45,14 @@ public class CAcertVoteMechanicsTest {
     @Test
     public void testStateEnum() {
         State[] values = State.values();
-        Assert.assertEquals(3, values.length);
+        assertEquals(3, values.length);
         List<State> states = Arrays.asList(values);
-        Assert.assertTrue(states.contains(RUNNING));
-        Assert.assertTrue(states.contains(IDLE));
-        Assert.assertTrue(states.contains(STOPPING));
+        assertTrue(states.contains(RUNNING));
+        assertTrue(states.contains(IDLE));
+        assertTrue(states.contains(STOPPING));
     }
 
-    @Before
+    @BeforeEach
     public void setup() {
         messages = ResourceBundle.getBundle("messages");
         subject = new CAcertVoteMechanics();
@@ -64,102 +61,102 @@ public class CAcertVoteMechanicsTest {
     @Test
     public void testNoVote() {
         String response = subject.evaluateVote("alice", "test");
-        Assert.assertEquals(MessageFormat.format(messages.getString("no_vote_running"), "alice"), response);
+        assertEquals(MessageFormat.format(messages.getString("no_vote_running"), "alice"), response);
     }
 
     @Test
     public void testCallVote() {
         String response = subject.callVote("test vote", TEST_WARN, TEST_TIMEOUT);
-        Assert.assertEquals(messages.getString("vote_started"), response);
-        Assert.assertEquals("test vote", subject.getTopic());
-        Assert.assertEquals(RUNNING, subject.getState());
+        assertEquals(messages.getString("vote_started"), response);
+        assertEquals("test vote", subject.getTopic());
+        assertEquals(RUNNING, subject.getState());
     }
 
     @Test
     public void testRefuseParallelCallVote() {
         subject.callVote("first", 30, TEST_TIMEOUT);
         String response = subject.callVote("second", TEST_WARN, TEST_TIMEOUT);
-        Assert.assertEquals(messages.getString("vote_running"), response);
-        Assert.assertEquals("first", subject.getTopic());
-        Assert.assertEquals(RUNNING, subject.getState());
+        assertEquals(messages.getString("vote_running"), response);
+        assertEquals("first", subject.getTopic());
+        assertEquals(RUNNING, subject.getState());
     }
 
     @Test
     public void testFreshVoteResult() {
         subject.callVote("fresh vote", TEST_WARN, TEST_TIMEOUT);
-        Assert.assertEquals("{}", subject.getCurrentResult());
+        assertEquals("{}", subject.getCurrentResult());
     }
 
     @Test
     public void testVote() {
         subject.callVote("test", TEST_WARN, TEST_TIMEOUT);
         String response = subject.evaluateVote("alice", "aye");
-        Assert.assertEquals(
+        assertEquals(
                 MessageFormat.format(messages.getString("count_vote"), "alice", "AYE"), response);
-        Assert.assertEquals("{alice=AYE}", subject.getCurrentResult());
+        assertEquals("{alice=AYE}", subject.getCurrentResult());
     }
 
     @Test
     public void testProxyVote() {
         subject.callVote("test", TEST_WARN, TEST_TIMEOUT);
         String response = subject.evaluateVote("alice", "proxy bob aye");
-        Assert.assertEquals(
+        assertEquals(
                 MessageFormat.format(messages.getString("count_proxy_vote"), "alice", "bob", "AYE"),
                 response);
-        Assert.assertEquals("{bob=AYE}", subject.getCurrentResult());
+        assertEquals("{bob=AYE}", subject.getCurrentResult());
     }
 
     @Test
     public void testInvalidVote() {
         subject.callVote("test", TEST_WARN, TEST_TIMEOUT);
         String response = subject.evaluateVote("alice", "moo");
-        Assert.assertEquals(
+        assertEquals(
                 MessageFormat.format(messages.getString("vote_not_understood"), "alice"), response);
-        Assert.assertEquals("{}", subject.getCurrentResult());
+        assertEquals("{}", subject.getCurrentResult());
     }
 
     @Test
     public void testChangeVote() {
         subject.callVote("test", TEST_WARN, TEST_TIMEOUT);
         String response = subject.evaluateVote("alice", "aye");
-        Assert.assertEquals(
+        assertEquals(
                 MessageFormat.format(messages.getString("count_vote"), "alice", "AYE"), response);
-        Assert.assertEquals("{alice=AYE}", subject.getCurrentResult());
+        assertEquals("{alice=AYE}", subject.getCurrentResult());
         response = subject.evaluateVote("alice", "naye");
-        Assert.assertEquals(
+        assertEquals(
                 MessageFormat.format(messages.getString("count_vote"), "alice", "NAYE"), response);
-        Assert.assertEquals("{alice=NAYE}", subject.getCurrentResult());
+        assertEquals("{alice=NAYE}", subject.getCurrentResult());
     }
 
     @Test
     public void testNoChangeForInvalidVote() {
         subject.callVote("test", TEST_WARN, TEST_TIMEOUT);
         String response = subject.evaluateVote("alice", "aye");
-        Assert.assertEquals(
+        assertEquals(
                 MessageFormat.format(messages.getString("count_vote"), "alice", "AYE"), response);
-        Assert.assertEquals("{alice=AYE}", subject.getCurrentResult());
+        assertEquals("{alice=AYE}", subject.getCurrentResult());
         response = subject.evaluateVote("alice", "moo");
-        Assert.assertEquals(
+        assertEquals(
                 MessageFormat.format(messages.getString("vote_not_understood"), "alice"), response);
-        Assert.assertEquals("{alice=AYE}", subject.getCurrentResult());
+        assertEquals("{alice=AYE}", subject.getCurrentResult());
     }
 
     @Test
     public void testInvalidProxyVote() {
         subject.callVote("test", TEST_WARN, TEST_TIMEOUT);
         String response = subject.evaluateVote("alice", "proxy bob moo");
-        Assert.assertEquals(
+        assertEquals(
                 MessageFormat.format(messages.getString("vote_not_understood"), "alice"), response);
-        Assert.assertEquals("{}", subject.getCurrentResult());
+        assertEquals("{}", subject.getCurrentResult());
     }
 
     @Test
     public void testInvalidProxyVoteTokenCount() {
         subject.callVote("test", TEST_WARN, TEST_TIMEOUT);
         String response = subject.evaluateVote("alice", "proxy ");
-        Assert.assertEquals(
+        assertEquals(
                 MessageFormat.format(messages.getString("invalid_proxy_vote"), "alice"), response);
-        Assert.assertEquals("{}", subject.getCurrentResult());
+        assertEquals("{}", subject.getCurrentResult());
     }
 
     @Test
@@ -208,8 +205,8 @@ public class CAcertVoteMechanicsTest {
         subject.evaluateVote("malory", "evil");
         subject.stopVote("test");
         String[] response = subject.closeVote();
-        Assert.assertArrayEquals(new String[]{"AYE: 3", "NAYE: 2", "ABSTAIN: 0"}, response);
-        Assert.assertEquals("", subject.getTopic());
-        Assert.assertEquals(IDLE, subject.getState());
+        assertArrayEquals(new String[]{"AYE: 3", "NAYE: 2", "ABSTAIN: 0"}, response);
+        assertEquals("", subject.getTopic());
+        assertEquals(IDLE, subject.getState());
     }
 }

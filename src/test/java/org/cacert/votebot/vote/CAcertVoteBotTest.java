@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018  Jan Dittberner
+ * Copyright (c) 2016-2020  Jan Dittberner
  *
  * This file is part of CAcert VoteBot.
  *
@@ -20,12 +20,12 @@ package org.cacert.votebot.vote;
 
 import org.cacert.votebot.shared.CAcertVoteMechanics;
 import org.cacert.votebot.shared.IRCClient;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.text.MessageFormat;
@@ -33,8 +33,7 @@ import java.util.ResourceBundle;
 
 import static org.mockito.Mockito.*;
 
-@SuppressWarnings("SpringJavaAutowiredMembersInspection")
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {TestConfiguration.class})
 public class CAcertVoteBotTest {
 
@@ -49,7 +48,7 @@ public class CAcertVoteBotTest {
 
     private CAcertVoteBot bot;
 
-    @Before
+    @BeforeEach
     public void setupTest() {
         messages = ResourceBundle.getBundle("messages");
         bot = new CAcertVoteBot(mechanics, ircClient);

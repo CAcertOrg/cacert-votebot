@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018  Jan Dittberner
+ * Copyright (c) 2018-2020  Jan Dittberner
  *
  * This file is part of CAcert VoteBot.
  *
@@ -19,8 +19,10 @@
 package org.cacert.votebot.shared;
 
 import org.cacert.votebot.shared.exceptions.IRCClientException;
-import org.junit.*;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -39,12 +41,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.*;
 
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class IRCClientTest {
     private static IRCRequestHandler handler;
     private static IRCClient client;
@@ -124,7 +126,7 @@ public class IRCClientTest {
 
     static class MockIrcServer implements Runnable {
         private final IRCRequestHandler handler;
-        private ServerSocket serverSocket;
+        private final ServerSocket serverSocket;
         private final Logger log = LoggerFactory.getLogger(MockIrcServer.class);
 
         MockIrcServer(IRCRequestHandler handler) throws IOException {
@@ -152,14 +154,14 @@ public class IRCClientTest {
         }
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void initializeClient() throws Exception {
         mockMe = Mockito.mock(PrintWriter.class);
         handler = new MockIRCRequestHandler(mockMe);
         MockIrcServer server = new MockIrcServer(handler);
         serverThread = new Thread(server);
         serverThread.setName("mock-server");
-        serverThread.run();
+        serverThread.start();
         client = new IRCClient();
         String testPort = Integer.toString(server.getServerPort());
         client.initializeFromArgs("-h", "localhost", "-p", testPort, "-n", "testbot", "--no-ssl");
@@ -168,13 +170,13 @@ public class IRCClientTest {
         verify(mockMe, after(100)).println(ArgumentMatchers.startsWith("USER testbot"));
     }
 
-    @AfterClass
+    @AfterAll
     public static void shutdownClient() {
         client.quit();
         serverThread.interrupt();
     }
 
-    @Before
+    @BeforeEach
     public void clearInvocations() {
         Mockito.clearInvocations(mockMe);
     }
@@ -259,6 +261,6 @@ public class IRCClientTest {
         } catch (IRCClientException e) {
             assertThat(e.getMessage(), containsString("test/nick"));
         }
-        verifyZeroInteractions(mockMe);
+        verifyNoInteractions(mockMe);
     }
 }

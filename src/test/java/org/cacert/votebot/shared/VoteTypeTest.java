@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016. Jan Dittberner
+ * Copyright (c) 2016-2020. Jan Dittberner
  *
  * This file is part of CAcert votebot.
  *
@@ -19,12 +19,13 @@
 
 package org.cacert.votebot.shared;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.cacert.votebot.shared.VoteType.ABSTAIN;
 import static org.cacert.votebot.shared.VoteType.AYE;
 import static org.cacert.votebot.shared.VoteType.NAYE;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Tests for {@link VoteType}.
@@ -34,13 +35,13 @@ import static org.cacert.votebot.shared.VoteType.NAYE;
 public class VoteTypeTest {
     @Test
     public void testEvaluate() throws Exception {
-        Assert.assertSame(AYE, VoteType.evaluate("aye"));
-        Assert.assertSame(NAYE, VoteType.evaluate("no"));
-        Assert.assertSame(ABSTAIN, VoteType.evaluate("abs"));
+        assertSame(AYE, VoteType.evaluate("aye"));
+        assertSame(NAYE, VoteType.evaluate("no"));
+        assertSame(ABSTAIN, VoteType.evaluate("abs"));
 
         try {
             VoteType.evaluate("foo");
-            Assert.fail("IllegalArgumentException expected");
+            fail("IllegalArgumentException expected");
         } catch (IllegalArgumentException e) {
             // expected behavior
         }
