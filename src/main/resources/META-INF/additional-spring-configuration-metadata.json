@@ -1,0 +1,34 @@
+{
+  "properties": [
+    {
+      "name": "voteBot.meetingChn",
+      "type": "java.lang.String",
+      "description": "Meeting channel that Vote Bot should join."
+    },
+    {
+      "name": "voteBot.voteChn",
+      "type": "java.lang.String",
+      "description": "Vote channel that Vote Bot should join."
+    },
+    {
+      "name": "voteBot.warnSecs",
+      "type": "java.lang.String",
+      "description": "Number of seconds after which Vote Bot should warn."
+    },
+    {
+      "name": "voteBot.timeoutSecs",
+      "type": "java.lang.String",
+      "description": "Number of seconds after which Vote Bot should finish a vote."
+    },
+    {
+      "name": "auditor.target.voteChn",
+      "type": "java.lang.String",
+      "description": "Channel that Audit Bot should listen in."
+    },
+    {
+      "name": "auditor.target.nick",
+      "type": "java.lang.String",
+      "description": "Nick name for the Audit bot."
+    }
+  ]
+}

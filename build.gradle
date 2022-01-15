@@ -1,5 +1,7 @@
+import org.springframework.boot.gradle.plugin.SpringBootPlugin
+
 /*
- * Copyright (c) 2016-2020  Jan Dittberner
+ * Copyright (c) 2016-2022  Jan Dittberner
  *
  * This file is part of CAcert votebot.
  *
@@ -17,31 +19,23 @@
  * CAcert votebot.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-buildscript {
-    repositories {
-        jcenter()
+plugins {
+    id 'application'
+    id 'org.springframework.boot' version '2.6.2'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(11)
     }
 }
 
-plugins {
-    id 'org.springframework.boot' version '2.4.0'
-}
-
-apply plugin: 'java'
-apply plugin: 'org.springframework.boot'
-
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-repositories {
-    jcenter()
-}
-
 dependencies {
-    implementation platform(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES)
+    implementation platform(SpringBootPlugin.BOM_COORDINATES)
     implementation("org.springframework.boot:spring-boot-starter-actuator")
-    implementation("commons-cli:commons-cli:1.4")
+    implementation("commons-cli:commons-cli:1.5.0")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor:2.6.2")
 }
 
 group = 'org.cacert'
@@ -57,11 +51,14 @@ springBoot {
     buildInfo()
 }
 
+compileJava.inputs.files(processResources)
+compileJava.inputs.files(bootBuildInfo)
+
 test {
     useJUnitPlatform()
 }
 
 bootRun {
     args System.getProperty("exec.args", "").split()
-    main = 'org.cacert.votebot.vote.CAcertVoteBot'
+    mainClass = 'org.cacert.votebot.vote.CAcertVoteBot'
 }

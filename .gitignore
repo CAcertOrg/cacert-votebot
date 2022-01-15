@@ -1,7 +1,8 @@
+.*.swp
 .classpath
 .gradle/
 .idea/
 .project
 .settings/
-build/
 /irc/
+build/
